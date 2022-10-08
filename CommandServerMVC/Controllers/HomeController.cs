@@ -34,9 +34,11 @@ public class HomeController : Controller
                 return BadRequest("Не удалось запустить процесс");
 
             process.EnableRaisingEvents = true;
+            process.BeginOutputReadLine();
+
             var out_text = new StringBuilder();
 
-            process.OutputDataReceived += (_, e) => out_text.Append(e.Data);
+            process.OutputDataReceived += (_, e) => out_text.AppendLine(e.Data);
 
 
             var process_completed = new TaskCompletionSource();
@@ -45,8 +47,20 @@ public class HomeController : Controller
             await process_completed.Task;
 
             _Logger.LogInformation("Выполнение команды {0} выполнено успешно", Command);
-            
-            return RedirectToAction("Index");
+
+            Directory.CreateDirectory("logs");
+            await System.IO.File.AppendAllTextAsync("logs/commands.log", $"time:{DateTime.Now}\r\n");
+            await System.IO.File.AppendAllTextAsync("logs/commands.log", $"command:{Command}\r\n");
+            await System.IO.File.AppendAllTextAsync("logs/commands.log", $"out:{out_text}\r\n");
+            await System.IO.File.AppendAllTextAsync("logs/commands.log", "---------------------\r\n");
+
+
+            return View(new CommandExecuteResult
+            {
+                Command = Command,
+                ExitCode = process.ExitCode,
+                Output = out_text.ToString(),
+            });
         }
         catch (Exception e)
         {

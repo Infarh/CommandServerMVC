@@ -1,0 +1,18 @@
+﻿@model CommandExecuteResult
+@{
+
+}
+
+<h3>Команда выполнена</h3>
+<h4>Команда</h4>
+<p>@Model.Command</p>
+
+<h4>Код возврата</h4>
+<p>@Model.ExitCode</p>
+
+<h4>Текст вывода команды</h4>
+<div>
+    <span>
+        @Model.Output
+    </span>
+</div>
