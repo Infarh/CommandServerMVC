@@ -21,6 +21,15 @@ public class HomeController : Controller
         {
             _Logger.LogInformation("Выполнение команды {0}", Command);
 
+            var process_info = new ProcessStartInfo(Command.Name)
+            {
+                UseShellExecute = Command.UseShellExecute,
+                Arguments       = Command.Args
+            };
+
+            var process = Process.Start(process_info);
+            if (process is null)
+                return BadRequest("Не удалось запустить процесс");
 
 
             _Logger.LogInformation("Выполнение команды {0} выполнено успешно", Command);
