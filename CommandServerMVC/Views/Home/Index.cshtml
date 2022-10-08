@@ -5,20 +5,34 @@
 
 <div class="text-center">
     <h4 class="display-4">Команда</h4>
+    
+    <div class="row">
+        <div class="col-2"></div>
+        <div class="col-8">
+            <form asp-action="Execute">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-    <form asp-action="Execute">
-        
-        <label asp-for="Name"></label>
-        <input asp-for="Name" placeholder="Команда"/>
-        
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label"></label>
+                    <input asp-for="Name" class="form-control">
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
 
-        <label asp-for="Args"></label>
-        <input asp-for="Args" placeholder="Аргументы" />
+                <div class="mb-3">
+                    <label asp-for="Args" class="form-label"></label>
+                    <input asp-for="Args" class="form-control">
+                    <span asp-validation-for="Args" class="text-danger"></span>
+                </div>
 
-        <label asp-for="UseShellExecute"></label>
-        <input asp-for="UseShellExecute" />
+                <div class="mb-3 form-check">
+                    <input asp-for="UseShellExecute" class="form-check-input">
+                    <label asp-for="UseShellExecute" class="form-check-label"></label>
+                </div>
 
-        <button type="submit" class="btn btn-primary">Выполнить</button>
-    </form>
+                <button type="submit" class="btn btn-primary">Выполнить</button>
+            </form>
+        </div>
+        <div class="col-2"></div>
+    </div>
 
 </div>
