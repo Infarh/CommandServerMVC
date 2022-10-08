@@ -15,4 +15,6 @@ public class CommandInfo
     [DefaultValue(false)]
     [Display(Name = "Использовать shell?")]
     public bool UseShellExecute { get; init; }
+
+    public override string ToString() => $"{Name} {Args} Use shell:{UseShellExecute}";
 }
