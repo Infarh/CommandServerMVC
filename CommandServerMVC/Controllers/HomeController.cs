@@ -1,5 +1,5 @@
 ﻿using System.Diagnostics;
-
+using System.Text;
 using CommandServerMVC.Models;
 
 using Microsoft.AspNetCore.Mvc;
@@ -15,7 +15,7 @@ public class HomeController : Controller
     public IActionResult Index() => View();
 
     [HttpPost]
-    public IActionResult Execute(CommandInfo Command)
+    public async Task<IActionResult> Execute(CommandInfo Command)
     {
         try
         {
@@ -23,16 +23,29 @@ public class HomeController : Controller
 
             var process_info = new ProcessStartInfo(Command.Name)
             {
-                UseShellExecute = Command.UseShellExecute,
-                Arguments       = Command.Args
+                UseShellExecute        = Command.UseShellExecute,
+                Arguments              = Command.Args,
+                CreateNoWindow         = true,
+                RedirectStandardOutput = true,
             };
 
             var process = Process.Start(process_info);
             if (process is null)
                 return BadRequest("Не удалось запустить процесс");
 
+            process.EnableRaisingEvents = true;
+            var out_text = new StringBuilder();
+
+            process.OutputDataReceived += (_, e) => out_text.Append(e.Data);
+
+
+            var process_completed = new TaskCompletionSource();
+            process.Exited += (_, _) => process_completed.SetResult();
+
+            await process_completed.Task;
 
             _Logger.LogInformation("Выполнение команды {0} выполнено успешно", Command);
+            
             return RedirectToAction("Index");
         }
         catch (Exception e)
