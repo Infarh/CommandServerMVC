@@ -26,7 +26,7 @@ public class HomeController : Controller
                 UseShellExecute        = Command.UseShellExecute,
                 Arguments              = Command.Args,
                 CreateNoWindow         = true,
-                RedirectStandardOutput = true,
+                RedirectStandardOutput = !Command.UseShellExecute,
             };
 
             var process = Process.Start(process_info);
@@ -34,7 +34,8 @@ public class HomeController : Controller
                 return BadRequest("Не удалось запустить процесс");
 
             process.EnableRaisingEvents = true;
-            process.BeginOutputReadLine();
+            if(!Command.UseShellExecute)
+                process.BeginOutputReadLine();
 
             var out_text = new StringBuilder();
 
