@@ -1,0 +1,24 @@
+﻿@model CommandInfo
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h4 class="display-4">Команда</h4>
+
+    <form asp-action="Execute">
+        
+        <label asp-for="Name"></label>
+        <input asp-for="Name" placeholder="Команда"/>
+        
+
+        <label asp-for="Args"></label>
+        <input asp-for="Args" placeholder="Аргументы" />
+
+        <label asp-for="UseShellExecute"></label>
+        <input asp-for="UseShellExecute" />
+
+        <button type="submit" class="btn btn-primary">Выполнить</button>
+    </form>
+
+</div>
