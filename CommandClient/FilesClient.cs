@@ -31,7 +31,7 @@ public class FilesClient
 
 public class ServerFileInfo
 {
-    public string FileName { get; init; }
+    public string FileName { get; init; } = null!
     public long Length { get; init; }
-    public string MD5 { get; init; }
+    public string MD5 { get; init; } = null!;
 }
