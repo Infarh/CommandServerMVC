@@ -95,11 +95,14 @@ public class FilesApiController : ControllerBase
         Directory.CreateDirectory(files_dir);
         var file_path = Path.Combine(files_dir, Path.GetRandomFileName());
 
-        using var        md5       = MD5.Create();
+        string md5_str;
         await using (var dest_file = System.IO.File.Create(file_path))
-            await file.CopyToAsync(dest_file, b => md5.ComputeHash(b), Cancel: Cancel);
+        {
+            var md5 = MD5.Create();
+            await file.CopyToAsync(dest_file, (buffer, size) => md5.ComputeHash(buffer, 0, size), Cancel: Cancel);
 
-        var md5_str = md5.Hash!.Aggregate(new StringBuilder(), (S, b) => S.Append(b.ToString("x2"))).ToString();
+            md5_str = md5.Hash!.Aggregate(new StringBuilder(), (S, b) => S.Append(b.ToString("x2"))).ToString();
+        }
 
         System.IO.File.Move(file_path, file_path = Path.Combine(files_dir, md5_str));
 

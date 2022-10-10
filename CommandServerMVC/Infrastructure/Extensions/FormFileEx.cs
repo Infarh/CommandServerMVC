@@ -10,7 +10,7 @@ namespace CommandServerMVC.Infrastructure.Extensions;
 
 internal static class FormFileEx
 {
-    public static async Task CopyToAsync(this IFormFile file, Stream dest_file, Action<byte[]> Process, CancellationToken Cancel = default, int BufferSize = 1024 * 1024)
+    public static async Task CopyToAsync(this IFormFile file, Stream dest_file, Action<byte[], int> Process, CancellationToken Cancel = default, int BufferSize = 1024 * 1024)
     {
         byte[]? buffer = null;
 
@@ -24,7 +24,7 @@ internal static class FormFileEx
             {
                 readed = await src.ReadAsync(buffer, 0, BufferSize, Cancel);
                 await dest_file.WriteAsync(buffer, 0, readed, Cancel);
-                Process(buffer);
+                Process(buffer, readed);
             }
             while (readed == BufferSize);
         }
