@@ -93,37 +93,13 @@ public class FilesApiController : ControllerBase
 
         var files_dir = _FilesDirectoryPath;
         Directory.CreateDirectory(files_dir);
-        var file_name = Path.GetRandomFileName();
-        var file_path = Path.Combine(files_dir, file_name);
+        var file_path = Path.Combine(files_dir, Path.GetRandomFileName());
 
-        byte[]? buffer = null;
-        string md5_str;
-        try
-        {
-            using var       md5       = MD5.Create();
-            await using var dest_file = System.IO.File.Create(file_path);
-            await using var src_file  = file.OpenReadStream();
+        using var        md5       = MD5.Create();
+        await using (var dest_file = System.IO.File.Create(file_path))
+            await file.CopyToAsync(dest_file, b => md5.ComputeHash(b), Cancel: Cancel);
 
-            const int buffer_size = 1024 * 1024;
-            buffer = ArrayPool<byte>.Shared.Rent(buffer_size);
-
-            int readed;
-            do
-            {
-                readed = await src_file.ReadAsync(buffer, 0, buffer_size, Cancel);
-                await dest_file.WriteAsync(buffer, 0, readed, Cancel);
-                md5.ComputeHash(buffer, 0, readed);
-            }
-            while(readed == buffer_size);
-
-            md5_str = md5.Hash!.Aggregate(new StringBuilder(), (S, b) => S.Append(b.ToString("x2")), S => S.ToString());
-
-        }
-        finally
-        {
-            if(buffer is { })
-                ArrayPool<byte>.Shared.Return(buffer);
-        }
+        var md5_str = md5.Hash!.Aggregate(new StringBuilder(), (S, b) => S.Append(b.ToString("x2"))).ToString();
 
         System.IO.File.Move(file_path, file_path = Path.Combine(files_dir, md5_str));
 
@@ -157,8 +133,8 @@ public class FilesApiController : ControllerBase
             var files_info = await DeserializeAsync(json_path, new
             {
                 FileName = "",
-                Length   = 0L,
-                MD5      = ""
+                Length = 0L,
+                MD5 = ""
             }, Cancel);
 
             var file_type = new FileExtensionContentTypeProvider().TryGetContentType(file_path, out var content_type)
@@ -171,11 +147,11 @@ public class FilesApiController : ControllerBase
 
         var files_tasks = Directory.EnumerateFiles(_FilesDirectoryPath, "*.info.json")
            .Select(async f => (File: f, Info: await DeserializeAsync(f, new
-            {
-                FileName = "",
-                Length   = 0L,
-                MD5      = ""
-            }, Cancel)))
+           {
+               FileName = "",
+               Length = 0L,
+               MD5 = ""
+           }, Cancel)))
            .WhenAsync(async f => (await f).Info.FileName == file);
 
         (json_path, var find_file_info) = await files_tasks.FirstOrDefaultAsync(cancellationToken: Cancel);
@@ -236,7 +212,7 @@ public class FilesApiController : ControllerBase
         System.IO.File.Delete(file_path);
         System.IO.File.Delete(json_path);
 
-        if(!Directory.EnumerateFileSystemEntries(files_dir, "*.*", SearchOption.AllDirectories).Any())
+        if (!Directory.EnumerateFileSystemEntries(files_dir, "*.*", SearchOption.AllDirectories).Any())
             Directory.Delete(files_dir);
 
         _Logger.LogInformation("Файл {0} удалён", find_file_info);
