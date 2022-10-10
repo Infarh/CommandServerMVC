@@ -1,4 +1,5 @@
-﻿using System.Net.Mime;
+﻿using System.Buffers;
+using System.Net.Mime;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -95,15 +96,33 @@ public class FilesApiController : ControllerBase
         var file_name = Path.GetRandomFileName();
         var file_path = Path.Combine(files_dir, file_name);
 
-        await using (var dest_file = System.IO.File.Create(file_path))
-            await file.CopyToAsync(dest_file, Cancel);
-
+        byte[]? buffer = null;
         string md5_str;
-        using (var md5 = MD5.Create())
+        try
         {
-            await using var dest_file = System.IO.File.OpenRead(file_path);
-            var md5_bytes = await md5.ComputeHashAsync(dest_file, Cancel);
-            md5_str = md5_bytes.Aggregate(new StringBuilder(), (S, b) => S.Append(b.ToString("x2")), S => S.ToString());
+            using var       md5       = MD5.Create();
+            await using var dest_file = System.IO.File.Create(file_path);
+            await using var src_file  = file.OpenReadStream();
+
+            const int buffer_size = 1024 * 1024;
+            buffer = ArrayPool<byte>.Shared.Rent(buffer_size);
+
+            int readed;
+            do
+            {
+                readed = await src_file.ReadAsync(buffer, 0, buffer_size, Cancel);
+                await dest_file.WriteAsync(buffer, 0, readed, Cancel);
+                md5.ComputeHash(buffer, 0, readed);
+            }
+            while(readed == buffer_size);
+
+            md5_str = md5.Hash!.Aggregate(new StringBuilder(), (S, b) => S.Append(b.ToString("x2")), S => S.ToString());
+
+        }
+        finally
+        {
+            if(buffer is { })
+                ArrayPool<byte>.Shared.Return(buffer);
         }
 
         System.IO.File.Move(file_path, file_path = Path.Combine(files_dir, md5_str));

@@ -1,7 +1,7 @@
 ﻿
 using CommandClient;
 
-using var http = new HttpClient()
+using var http = new HttpClient
 {
     BaseAddress = new("http://localhost:1423"),
 };
